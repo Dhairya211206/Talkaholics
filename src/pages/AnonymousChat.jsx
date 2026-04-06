@@ -7,7 +7,7 @@ export default function AnonymousChat() {
   const { user, showToast } = useApp();
   
   const [messages, setMessages] = useState([
-    { id: 1, text: "Welcome to the Stress Relief peer space. Please remember to respect others' boundaries.", sender: "system", time: "10:00 AM", reactions: 0 }
+    { id: 1, text: "Welcome to the Stress Relief peer space. Please remember to respect others' boundaries.", sender: "system", time: "10:00 AM", reactions: 0, flagged: false }
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -16,6 +16,7 @@ export default function AnonymousChat() {
   // Deep Modals
   const [activeModal, setActiveModal] = useState(null); // 'empathy_guard', 'accessibility', 'breathe'
   const [breathingPhase, setBreathingPhase] = useState('Inhale');
+  const [flaggedId, setFlaggedId] = useState(null); // Which message is currently being flagged
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isTyping]);
 
@@ -36,14 +37,20 @@ export default function AnonymousChat() {
     e.preventDefault();
     if (!input.trim()) return;
     
-    setMessages(prev => [...prev, { id: Date.now(), text: input, sender: "me", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), reactions: 0 }]);
+    setMessages(prev => [...prev, { id: Date.now(), text: input, sender: "me", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), reactions: 0, flagged: false }]);
     setInput("");
 
     setTimeout(() => setIsTyping(true), 500);
     setTimeout(() => {
       setIsTyping(false);
-      setMessages(prev => [...prev, { id: Date.now() + 1, text: "It takes a lot of courage to talk about this. I completely hear you.", sender: "peer2", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), reactions: 0, isModerator: true }]);
+      setMessages(prev => [...prev, { id: Date.now() + 1, text: "It takes a lot of courage to talk about this. I completely hear you.", sender: "peer2", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), reactions: 0, isModerator: true, flagged: false }]);
     }, 2500);
+  };
+
+  const executeFlag = () => {
+     setMessages(prev => prev.map(m => m.id === flaggedId ? {...m, flagged: true, text: "[Message Hidden by Empathy Guard]"} : m));
+     setActiveModal(null);
+     showToast("Message successfully redacted from community.");
   };
 
   return (
@@ -55,7 +62,7 @@ export default function AnonymousChat() {
             <Wind size={24} className="mb-2"/> <span className="text-xs">Box Breathe</span>
          </button>
          <button className="btn btn-outline flex-col py-4 px-3" onClick={() => setActiveModal('accessibility')} style={{width: '90px', background: 'var(--bg-secondary)'}}>
-            <Volume2 size={24} className="mb-2"/> <span className="text-xs">Audio Read</span>
+            <Volume2 size={24} className="mb-2"/> <span className="text-xs">Access</span>
          </button>
       </div>
 
@@ -82,29 +89,29 @@ export default function AnonymousChat() {
                     <p className="text-sm font-italic" style={{ color: 'var(--text-muted)' }}>{msg.text}</p>
                   </div>
                 ) : (
-                  <div className="card-glass message-bubble p-0 shadow-sm">
-                    {msg.isModerator && (
+                  <div className="card-glass message-bubble p-0 shadow-sm" style={msg.flagged ? {borderColor: 'var(--danger-color)', background: 'var(--bg-danger)'} : {}}>
+                    {msg.isModerator && !msg.flagged && (
                       <div className="flex-align-center gap-1 mb-2 border-bottom pb-2">
                         <span className="badge badge-success"><CheckCircle size={10} /> TRAINED LISTENER</span>
                       </div>
                     )}
-                    <p style={{ lineHeight: '1.6' }}>{msg.text}</p>
+                    <p style={msg.flagged ? {lineHeight: '1.6', fontStyle: 'italic', color: 'var(--danger-color)'} : { lineHeight: '1.6' }}>{msg.text}</p>
                     {msg.sender !== 'system' && (
                       <div className="flex-between mt-3 pt-2 border-top">
                         <span className="text-xs text-muted">{msg.time}</span>
                         <div className="flex-align-center gap-2">
                           {msg.reactions > 0 && <span className="text-xs text-heart fw-bold"><Heart size={12} fill="currentColor" className="inline" /> {msg.reactions}</span>}
-                          {msg.sender !== 'me' && (
+                          {msg.sender !== 'me' && !msg.flagged && (
                             <>
                               <button className="btn-icon sm" onClick={() => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, reactions: m.reactions + 1 } : m))}><Heart size={16} /></button>
-                              <button className="btn-icon sm text-muted" onClick={() => setActiveModal('empathy_guard')}><Flag size={14} /></button>
+                              <button className="btn-icon sm text-muted" title="Flag string" onClick={() => {setFlaggedId(msg.id); setActiveModal('empathy_guard');}}><Flag size={14} /></button>
                             </>
                           )}
                         </div>
                       </div>
                     )}
                   </div>
-                )}
+               )}
               </motion.div>
             ))}
 
@@ -123,6 +130,31 @@ export default function AnonymousChat() {
            <button type="submit" className="btn btn-primary p-3" style={{borderRadius: '50%'}}><Send size={20} /></button>
         </form>
       </div>
+
+      {/* Accessible Reading Modal */}
+      <AnimatePresence>
+        {activeModal === 'accessibility' && (
+          <div className="modal-overlay" onClick={() => setActiveModal(null)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="card-glass modal-content" onClick={e => e.stopPropagation()}>
+               <div className="flex-between border-bottom pb-4 mb-4">
+                  <h2 className="text-lg"><Volume2 className="inline mr-2 text-accent"/> Accessibility Overlays</h2>
+                   <button className="btn-icon" onClick={() => setActiveModal(null)}><X/></button>
+               </div>
+               <p className="text-sm text-muted mb-4">Mental health support should be barrier-free. Toggle physical or sensory constraints below.</p>
+               <div className="flex-col gap-3">
+                  <div className="flex-between p-4 border rounded bg-dark">
+                     <span className="fw-bold">Text-to-Speech Output</span>
+                     <button className="btn btn-primary py-2 px-3 text-sm" onClick={() => {showToast("Voice engine activated."); window.speechSynthesis.speak(new SpeechSynthesisUtterance("Universal accessibility activated. Welcome."));}}>Enable Voice</button>
+                  </div>
+                  <div className="flex-between p-4 border rounded bg-dark">
+                     <span className="fw-bold">Dyslexia-Friendly Font</span>
+                     <button className="btn btn-outline py-2 px-3 text-sm" onClick={() => {document.body.style.fontFamily = "'Comic Sans MS', cursive"; showToast("Clinical visual filters applied.");}}>Toggle Font</button>
+                  </div>
+               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Box Breathing UI Overlay for End-User Grounding */}
       <AnimatePresence>
@@ -151,12 +183,13 @@ export default function AnonymousChat() {
           <div className="modal-overlay" onClick={() => setActiveModal(null)}>
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="card-glass modal-content" onClick={e => e.stopPropagation()}>
                <div className="flex-between border-bottom pb-4 mb-4">
-                  <h2 className="text-accent text-lg"><Shield className="inline mr-2"/> Peer Reporting</h2>
+                  <h2 className="text-danger text-lg"><Shield className="inline mr-2"/> Peer Reporting</h2>
                   <button className="btn-icon" onClick={() => setActiveModal(null)}><X/></button>
                </div>
                <p className="text-sm text-muted mb-4">We maintain safe spaces through communal care. Why are you flagging this message?</p>
                <div className="flex-col gap-2 mb-4">
-                  <button className="btn btn-outline justify-center w-full" onClick={() => {setActiveModal(null); showToast("Message flagged for admin review.");}}>The user is using harmful language</button>
+                  <button className="btn btn-outline justify-center w-full py-3" onClick={executeFlag}>User is utilizing harmful language.</button>
+                  <button className="btn btn-outline justify-center w-full py-3" onClick={executeFlag}>User is invalidating lived experiences.</button>
                </div>
             </motion.div>
           </div>

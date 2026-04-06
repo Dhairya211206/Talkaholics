@@ -1,12 +1,26 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Calendar, Activity, BookOpen, HeartPulse, Video, Plus, CheckCircle, PenTool, LayoutDashboard } from 'lucide-react';
-import { useApp } from '../AppContext';
+import { ShieldCheck, Calendar, Activity, HeartPulse, Video, Plus, CheckCircle, PenTool, LayoutDashboard, Ticket, X, MapPin, Clock, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useApp } from '../AppContext';
 
 export default function Dashboard() {
   const { user, showToast } = useApp();
-  const [activeTab, setActiveTab] = useState('progress');
+  const [activeTab, setActiveTab] = useState('calendar');
+  const [ticketModal, setTicketModal] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleRSVP = (title, time, waitlist = false) => {
+     setTicketModal({ title, time, waitlist });
+  };
+
+  const handleExportCal = () => {
+     setDownloading(true);
+     setTimeout(() => {
+        setDownloading(false);
+        showToast("Ticket successfully downloaded as standard .ics calendar file!");
+     }, 2000);
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="page-container" style={{maxWidth: '1200px'}}>
@@ -25,10 +39,9 @@ export default function Dashboard() {
       </div>
 
       <AnimatePresence mode="wait">
-        
         {activeTab === 'progress' && (
            <motion.div key="progress" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="flex-col gap-6">
-              <div className="grid-container" style={{gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem'}}>
+              <div className="grid-container" style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem'}}>
                  <div className="card-glass p-5 rounded border">
                     <div className="flex-between text-muted mb-3"><ShieldCheck size={20}/> <span className="text-xs fw-bold">LISTEN HOURS</span></div>
                     <h2 style={{fontSize: '2.5rem', color: 'var(--accent-primary)'}}>14<span className="text-lg">hrs</span></h2>
@@ -39,29 +52,8 @@ export default function Dashboard() {
                  </div>
                  <div className="card-glass p-5 rounded border bg-success">
                     <div className="flex-between text-success mb-3"><CheckCircle size={20}/> <span className="text-xs fw-bold">ACADEMY RANK</span></div>
-                    <h2 style={{fontSize: '2rem', color: '#22543D', marginTop:'0.5rem'}}>Level 2</h2>
-                    <p className="text-sm mt-1" style={{color: '#22543D'}}>Cert. Crisis Listener</p>
-                 </div>
-              </div>
-
-              <div className="card-glass p-6 rounded relative overflow-hidden">
-                 <div className="flex-between mb-5">
-                   <h3 className="text-lg">Mood Logging Distribution</h3>
-                   <span className="badge">Trailing 7 Days</span>
-                 </div>
-                 <div className="flex-col gap-3">
-                   <div className="flex-align-center gap-4">
-                      <span className="w-16">Great</span>
-                      <div className="progress-bar flex-1"><div className="progress-fill" style={{width: '60%', background: 'var(--success-color)'}}></div></div>
-                   </div>
-                   <div className="flex-align-center gap-4">
-                      <span className="w-16">Okay</span>
-                      <div className="progress-bar flex-1"><div className="progress-fill" style={{width: '30%', background: 'var(--warning-color)'}}></div></div>
-                   </div>
-                   <div className="flex-align-center gap-4">
-                      <span className="w-16">Down</span>
-                      <div className="progress-bar flex-1"><div className="progress-fill" style={{width: '10%', background: 'var(--danger-color)'}}></div></div>
-                   </div>
+                    <h2 style={{fontSize: '2rem', color: '#10B981', marginTop:'0.5rem'}}>Level 2</h2>
+                    <p className="text-sm mt-1" style={{color: '#10B981'}}>Cert. Crisis Listener</p>
                  </div>
               </div>
            </motion.div>
@@ -72,22 +64,22 @@ export default function Dashboard() {
               <h3 className="mb-5 flex-align-center gap-2"><Video className="text-accent"/> Upcoming Live Cohorts</h3>
               <div className="flex-col gap-4">
                  
-                 <div className="bg-dark p-4 rounded border flex-between">
+                 <div className="bg-dark p-5 rounded border flex-between" style={{borderColor: 'rgba(14, 165, 233, 0.4)'}}>
                     <div>
-                       <div className="flex-align-center gap-2 mb-1"><span className="badge badge-success">Tomorrow, 7:00 PM</span><span className="text-xs text-muted">Webinar</span></div>
-                       <h4 className="text-lg">Managing Burnout with Dr. Aris</h4>
-                       <p className="text-sm text-muted mt-1">A supervised 1-hour workshop on recognizing clinical burnout.</p>
+                       <div className="flex-align-center gap-2 mb-2"><span className="badge badge-success">Tomorrow, 7:00 PM</span><span className="badge" style={{background:'rgba(255,255,255,0.1)', color:'white'}}>Webinar</span></div>
+                       <h4 className="text-xl mb-1">Managing Burnout with Dr. Aris</h4>
+                       <p className="text-sm text-muted">A supervised 1-hour workshop on recognizing clinical burnout.</p>
                     </div>
-                    <button className="btn btn-outline py-2 px-4" onClick={() => showToast("RSVP Confirmed. Link will be emailed.")}>RSVP</button>
+                    <button className="btn btn-primary py-3 px-6" onClick={() => handleRSVP("Managing Burnout with Dr. Aris", "Tomorrow, 7:00 PM EST")}>RSVP to Event</button>
                  </div>
 
-                 <div className="bg-dark p-4 rounded border flex-between">
+                 <div className="bg-dark p-5 rounded border flex-between">
                     <div>
-                       <div className="flex-align-center gap-2 mb-1"><span className="badge badge-heart" style={{background: 'var(--danger-color)', color: 'white'}}>Saturday, 10:00 AM</span><span className="text-xs text-muted">Group Therapy</span></div>
-                       <h4 className="text-lg">Trauma Healing (Limit: 10 Users)</h4>
-                       <p className="text-sm text-muted mt-1">Closed-circuit safe space mediated by two Licensed Clinical Social Workers.</p>
+                       <div className="flex-align-center gap-2 mb-2"><span className="badge" style={{background: 'var(--danger-color)', color: 'white'}}>Saturday, 10:00 AM</span><span className="badge" style={{background:'rgba(255,255,255,0.1)', color:'white'}}>Limited Group</span></div>
+                       <h4 className="text-xl mb-1">Trauma Healing Circle</h4>
+                       <p className="text-sm text-muted">Closed-circuit safe space mediated by two Licensed Clinical Social Workers.</p>
                     </div>
-                    <button className="btn btn-primary py-2 px-4" onClick={() => showToast("Added to waiting list. You are #3 in queue.")}>Join Waitlist</button>
+                    <button className="btn btn-outline py-3 px-6 text-danger border-danger" onClick={() => handleRSVP("Trauma Healing Circle", "Saturday, 10:00 AM EST", true)}>Join Waitlist (Full)</button>
                  </div>
 
               </div>
@@ -95,38 +87,73 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'toolkits' && (
-           <motion.div key="toolkits" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="grid-container" style={{gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '2rem'}}>
-             <div className="card-glass p-5 rounded border">
-                <h3 className="mb-4">My Coping Catalog</h3>
-                <ul className="flex-col gap-2">
-                   <li className="p-3 bg-dark rounded border text-sm fw-bold border-accent bg-ai text-accent">5-4-3-2-1 Grounding</li>
-                   <li className="p-3 bg-dark rounded border text-sm text-muted">Box Breathing Exercise</li>
-                   <li className="p-3 bg-dark rounded border text-sm text-muted">Cognitive Defusion Audio</li>
-                </ul>
-                <button className="btn w-full btn-outline mt-4 btn-sm py-2"><Plus size={16}/> Find more in AI Hub</button>
-             </div>
-             
-             <div className="card-glass p-6 rounded" style={{background: 'var(--bg-deep)'}}>
-                <div className="text-center py-6">
-                   <HeartPulse size={60} className="text-accent mx-auto mb-4"/>
-                   <h2>5-4-3-2-1 Grounding Technique</h2>
-                   <p className="text-muted my-4 max-w-md mx-auto">This cognitive exercise forces your brain to process sensory data, physically interrupting panic attacks and severe disassociation.</p>
-                   
-                   <div className="text-left bg-dark p-5 rounded border mx-auto max-w-md">
-                      <ul className="flex-col gap-3 text-sm">
-                         <li><b>5:</b> Acknowledge FIVE things you see.</li>
-                         <li><b>4:</b> Acknowledge FOUR things you can touch.</li>
-                         <li><b>3:</b> Acknowledge THREE things you hear.</li>
-                         <li><b>2:</b> Acknowledge TWO things you can smell.</li>
-                         <li><b>1:</b> Acknowledge ONE thing you can taste.</li>
-                      </ul>
-                   </div>
-                </div>
-             </div>
+           <motion.div key="toolkits" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="grid-container" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem'}}>
+              <div className="card-glass p-6 rounded border bg-dark">
+                 <div className="flex-between mb-4"><Wind size={24} className="text-accent"/><Lock size={16} className="text-success"/></div>
+                 <h3 className="mb-2 text-xl">Panic Grounding Kit</h3>
+                 <p className="text-sm text-muted mb-5">Box breathing overlays saved directly from your Anonymous Chat sessions.</p>
+                 <Link to="/chat" className="btn btn-primary w-full justify-center py-3">Launch Offline Tool</Link>
+              </div>
+              <div className="card-glass p-6 rounded border bg-dark">
+                 <div className="flex-between mb-4"><PenTool size={24} className="text-accent"/><Lock size={16} className="text-success"/></div>
+                 <h3 className="mb-2 text-xl">Semantic Vault</h3>
+                 <p className="text-sm text-muted mb-5">Direct access to your 24 encrypted cognitive behavioral insights.</p>
+                 <Link to="/journal" className="btn btn-outline w-full justify-center py-3 border-accent">Open Locked Vault</Link>
+              </div>
+              <div className="card-glass p-6 rounded border bg-dark">
+                 <div className="flex-between mb-4"><Video size={24} className="text-accent"/><Lock size={16} className="text-success"/></div>
+                 <h3 className="mb-2 text-xl">Media Briefcase</h3>
+                 <p className="text-sm text-muted mb-5">Your offline library of curated TED talks and clinical masterclasses.</p>
+                 <Link to="/content" className="btn btn-outline w-full justify-center py-3">Open Briefcase Drawer</Link>
+              </div>
            </motion.div>
         )}
-
       </AnimatePresence>
+
+      {/* Deep Ticketing Modal for RSVPs */}
+      <AnimatePresence>
+         {ticketModal && (
+           <div className="modal-overlay" onClick={() => setTicketModal(null)}>
+             <motion.div initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="modal-content" onClick={e => e.stopPropagation()} style={{maxWidth: '500px'}}>
+                <div className="bg-main border rounded overflow-hidden shadow-lg relative" style={{background: 'var(--bg-secondary)', borderColor: ticketModal.waitlist ? 'var(--danger-color)' : 'var(--accent-primary)'}}>
+                   
+                   {/* Ticket Stub Design */}
+                   <div className="p-6 text-center border-bottom border-dashed" style={{borderBottom: '2px dashed rgba(255,255,255,0.2)'}}>
+                      <div className="circle-btn mx-auto mb-4" style={{width:'60px', height:'60px', background: ticketModal.waitlist ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: ticketModal.waitlist ? 'var(--danger-color)' : 'var(--success-color)'}}>
+                         <Ticket size={28}/>
+                      </div>
+                      <h2 className="mb-2" style={{lineHeight: '1.2'}}>{ticketModal.title}</h2>
+                      <div className={`badge ${ticketModal.waitlist ? 'bg-danger text-danger' : 'badge-success'} mb-4`}>{ticketModal.waitlist ? 'WAITLIST TICKET' : 'CONFIRMED ADMISSION'}</div>
+                      
+                      <div className="flex-col gap-2 bg-dark p-4 rounded text-left border">
+                         <div className="flex-align-center gap-3 text-sm"><Clock size={16} className="text-muted"/> <span className="fw-bold">{ticketModal.time}</span></div>
+                         <div className="flex-align-center gap-3 text-sm"><MapPin size={16} className="text-muted"/> <span>Secure Virtual Node (Zoom)</span></div>
+                      </div>
+                   </div>
+                   
+                   {/* Actions */}
+                   <div className="p-6" style={{background: 'rgba(0,0,0,0.2)'}}>
+                      <p className="text-xs text-muted mb-4 text-center">Your private connection link has been sent to your registered email. Do not share this link.</p>
+                      <div className="flex-col gap-3">
+                         {!ticketModal.waitlist && (
+                            <button className="btn btn-primary w-full py-4 justify-center" disabled={downloading} onClick={handleExportCal}>
+                               {downloading ? "Generating standard file format..." : <><Download size={18} className="mr-2"/> Export to Calendar (.ics)</>}
+                            </button>
+                         )}
+                         <Link to="/content" className="btn w-full btn-outline mt-4 btn-sm py-2 display-block text-center border-accent text-accent"><Plus size={16} className="inline mr-2"/> Find more in AI Hub</Link>
+                         <button className="btn btn-outline w-full py-3 justify-center" onClick={() => setTicketModal(null)}>Close Ticket</button>
+                      </div>
+                   </div>
+
+                   {/* Ticket hole punch cutouts using pseudo-elements implicitly via CSS or just raw div */}
+                   <div className="absolute rounded-full" style={{width:'40px', height:'40px', background:'var(--bg-deep)', left:'-20px', top:'50%', transform:'translateY(-50%)'}}></div>
+                   <div className="absolute rounded-full" style={{width:'40px', height:'40px', background:'var(--bg-deep)', right:'-20px', top:'50%', transform:'translateY(-50%)'}}></div>
+                </div>
+             </motion.div>
+           </div>
+         )}
+      </AnimatePresence>
+
     </motion.div>
   );
 }
