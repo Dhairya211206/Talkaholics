@@ -1,95 +1,85 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Cpu, ArrowRight, AlertTriangle, Activity, Lock, Database } from 'lucide-react';
+import { Heart, Activity, Compass, ArrowRight, Frown, Meh, Smile, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../AppContext';
 
 export default function Home() {
   const navigate = useNavigate();
-  const { showToast } = useApp();
-  
-  const [triageStage, setTriageStage] = useState(0); 
-  // 0: Intake, 1: Scanning, 2: Risk Flag, 3: Clearance
+  const { toggleSOS } = useApp();
+  const [pulseValue, setPulseValue] = useState(50);
+  const [showRecommendation, setShowRecommendation] = useState(false);
 
-  const runTriageSequence = () => {
-    setTriageStage(1);
-    setTimeout(() => setTriageStage(2), 2500); // Simulate Risk Check
-    setTimeout(() => setTriageStage(3), 5000); // Route to Clearance
+  const getMoodConfig = () => {
+     if (pulseValue < 20) return { icon: <AlertCircle size={40} className="text-danger"/>, text: "I feel completely overwhelmed", color: "var(--danger-color)", bg: "var(--bg-danger)", route: "SOS", btn: "Trigger Crisis Protocol" };
+     if (pulseValue < 45) return { icon: <Frown size={40} style={{color: '#DD6B20'}}/>, text: "I am struggling right now", color: "#DD6B20", bg: "rgba(221, 107, 32, 0.1)", route: "/chat", btn: "Enter a Safe Space" };
+     if (pulseValue < 75) return { icon: <Meh size={40} className="text-muted"/>, text: "I'm surviving, just exhausted", color: "var(--text-muted)", bg: "var(--bg-dark)", route: "/journal", btn: "Log inside the AI Journal" };
+     return { icon: <Smile size={40} className="text-success"/>, text: "I am ready to help others", color: "var(--success-color)", bg: "var(--bg-success)", route: "/academy", btn: "Open Listener Academy" };
   };
 
-  const routeToProtocol = () => {
-    showToast("System diagnostic clear. Routing to Triage Command.");
-    navigate('/dashboard');
+  const handleRoute = (config) => {
+     if (config.route === 'SOS') {
+        toggleSOS(true);
+     } else {
+        navigate(config.route);
+     }
   };
+
+  const config = getMoodConfig();
 
   return (
     <div className="page-container flex-col justify-center" style={{minHeight: '85vh', display: 'flex'}}>
       
       <div className="text-center mb-6">
-         <div className="ai-badge mb-4 mx-auto w-max" style={{width: 'fit-content', padding: '0.5rem 1rem'}}><Cpu size={16}/> Talkaholics Core System v4.1</div>
-         <h1 className="title text-gradient" style={{fontSize: '4.5rem'}}>AI Assessment Gateway</h1>
-         <p className="text-muted mt-3 text-lg" style={{maxWidth: '600px', margin: '0 auto'}}>A structured, B2B clinical funnel utilizing active sentiment oversight to secure peer-to-peer mental health delivery.</p>
+         <div className="badge badge-heart mb-4 mx-auto w-max px-4 py-2" style={{width: 'fit-content'}}><Heart size={14} fill="currentColor" className="mr-2"/> Non-Profit Peer Infrastructure</div>
+         <h1 className="title" style={{fontSize: '4.5rem', lineHeight: '1.1'}}>Care is a <span className="text-accent">Human Right.</span></h1>
+         <p className="text-muted mt-4 text-lg" style={{maxWidth: '700px', margin: '0 auto'}}>A community-led, AI-structured mental health platform. No paywalls. No judgment. Just people protecting people.</p>
       </div>
 
-      <div className="mx-auto w-full" style={{maxWidth: '900px'}}>
-        <div className="triage-terminal">
-           <div className="triage-scanline"></div>
-           
-           <div className="flex-between border-bottom pb-4 mb-4">
-              <div className="flex-align-center gap-3">
-                 <ShieldCheck size={28} className="text-accent" />
-                 <div>
-                    <h2 style={{fontSize: '1.2rem', letterSpacing:'1px', textTransform:'uppercase'}}>Intake Protocol</h2>
-                    <p className="text-xs text-muted">System ID: 899-AX</p>
-                 </div>
+      <div className="mx-auto w-full mt-6" style={{maxWidth: '800px'}}>
+        <div className="card-glass p-0 overflow-hidden relative shadow-lg">
+           {/* Interactive Daily Pulse Tracker */}
+           <div className="p-6 text-center" style={{background: showRecommendation ? config.bg : 'var(--bg-secondary)', transition: 'background 0.5s ease'}}>
+              <h2 className="mb-2">How are we feeling today?</h2>
+              <p className="text-sm text-muted mb-6">Drag the slider to perform your daily semantic check-in.</p>
+
+              <div className="flex-align-center gap-4 mb-6">
+                 <Frown size={24} className="text-danger"/>
+                 <input 
+                   type="range" 
+                   min="0" max="100" 
+                   value={pulseValue} 
+                   onChange={(e) => {setPulseValue(parseInt(e.target.value)); setShowRecommendation(false);}} 
+                   className="w-full"
+                   style={{
+                     appearance: 'none', height: '8px', 
+                     background: `linear-gradient(to right, var(--danger-color), #DD6B20, var(--text-muted), var(--success-color))`, 
+                     borderRadius: '4px', outline: 'none'
+                   }}
+                 />
+                 <Smile size={24} className="text-success"/>
               </div>
-              <div className="text-right">
-                <span className="text-xs text-ai font-bold border p-2 rounded" style={{borderColor: 'var(--ai-color)'}}><Activity className="inline mr-2" size={14}/> SYSTEM ACTIVE</span>
-              </div>
+
+              {!showRecommendation ? (
+                 <button className="btn btn-primary px-6 py-3" onClick={() => setShowRecommendation(true)}>Analyze My Pulse <Compass size={18} className="ml-2"/></button>
+              ) : (
+                 <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} className="bg-secondary p-5 rounded mt-4 border shadow-sm">
+                    {config.icon}
+                    <h3 className="my-3" style={{color: config.color, fontSize:'1.5rem'}}>{config.text}</h3>
+                    <p className="text-sm text-muted mb-5">Our AI routing system believes this is the most beneficial next step for you today.</p>
+                    <button className="btn w-full justify-center py-4 text-lg border" style={{background: config.color, color: 'white'}} onClick={() => handleRoute(config)}>
+                       {config.btn} <ArrowRight size={20} className="ml-2"/>
+                    </button>
+                 </motion.div>
+              )}
            </div>
+        </div>
 
-           <AnimatePresence mode="wait">
-             {triageStage === 0 && (
-               <motion.div key="stage0" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-                  <p className="mb-5 text-sm" style={{lineHeight:'1.8'}}>Before granting network clearance to structured community modules, all incoming vectors must undergo automated risk assessment. By proceeding, you consent to real-time algorithmic oversight.</p>
-                  
-                  <div className="scan-grid mb-6">
-                     <div className="scan-node"><Lock size={24} className="text-muted mx-auto mb-2"/> <p className="text-xs">End-to-End Secure</p></div>
-                     <div className="scan-node"><Database size={24} className="text-muted mx-auto mb-2"/> <p className="text-xs">HIPAA Compliant Structure</p></div>
-                     <div className="scan-node"><Cpu size={24} className="text-muted mx-auto mb-2"/> <p className="text-xs">Zero-Threat AI Monitor</p></div>
-                  </div>
-
-                  <button className="btn btn-primary w-full py-4 text-lg" onClick={runTriageSequence}>Initiate Diagnostics <ArrowRight size={20}/></button>
-               </motion.div>
-             )}
-
-             {triageStage === 1 && (
-               <motion.div key="stage1" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-center py-6">
-                  <Activity size={48} className="text-ai mx-auto mb-4" style={{animation: 'pulse 1.5s infinite'}}/>
-                  <h3 className="mb-2">Algorithmic Base Scanning</h3>
-                  <p className="text-sm text-ai font-monospace">Parsing historic vectors... Mapping behavioral markers...</p>
-                  <div className="progress-bar mt-4 mx-auto" style={{maxWidth:'400px'}}><motion.div className="progress-fill" style={{background: 'var(--ai-color)'}} initial={{width:0}} animate={{width:'100%'}} transition={{duration: 2.5}}/></div>
-               </motion.div>
-             )}
-
-             {triageStage === 2 && (
-               <motion.div key="stage2" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-center py-6">
-                  <AlertTriangle size={48} className="text-warning mx-auto mb-4" />
-                  <h3 className="text-warning mb-2">Analyzing Distress Metrics</h3>
-                  <p className="text-sm text-muted font-monospace">Running pattern match against predefined crisis markers...</p>
-                  <div className="progress-bar mt-4 mx-auto" style={{maxWidth:'400px'}}><motion.div className="progress-fill" style={{background: 'var(--warning-color)'}} initial={{width:0}} animate={{width:'100%'}} transition={{duration: 2.5}}/></div>
-               </motion.div>
-             )}
-
-             {triageStage === 3 && (
-               <motion.div key="stage3" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-center py-5">
-                  <ShieldCheck size={56} className="text-success mx-auto mb-4" />
-                  <h2 className="text-success mb-2">Clearance Granted</h2>
-                  <p className="text-sm text-muted mb-6">No emergency markers detected. Authorized for structured peer and clinical modules.</p>
-                  <button className="btn btn-glass w-full py-4 text-lg border" onClick={routeToProtocol} style={{borderColor: 'var(--success-color)', color: 'var(--success-color)'}}>Enter Command Center <ArrowRight size={20}/></button>
-               </motion.div>
-             )}
-           </AnimatePresence>
+        {/* Global Impact Quick-Stats */}
+        <div className="dashboard-grid mt-6" style={{gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem'}}>
+           <div className="card-glass p-4 text-center rounded border"><p className="text-2xl fw-bold text-success">14,204</p><span className="text-xs text-muted">Peers Anchored</span></div>
+           <div className="card-glass p-4 text-center rounded border"><p className="text-2xl fw-bold text-accent">9.8/10</p><span className="text-xs text-muted">Empathy Score</span></div>
+           <div className="card-glass p-4 text-center rounded border"><p className="text-2xl fw-bold text-heart">Zero</p><span className="text-xs text-muted">Cost to User</span></div>
         </div>
       </div>
     </div>
